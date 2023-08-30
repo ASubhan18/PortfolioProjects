@@ -1,3 +1,5 @@
+-- Project: Exploring and Analysing OurWorldinData Covid19 dataset
+
 SELECT *
 FROM portfolioProject..CovidDeaths
 ORDER BY  1,2
@@ -8,57 +10,50 @@ FROM portfolioProject..CovidVaccinations
 ORDER BY  1,2
 
 
+
+-----------------------------------------------------------------------------------------------------
+-- Looking at the total cases, total deaths and population
+
 SELECT location, date, total_cases, total_deaths, population
 FROM portfolioProject..CovidDeaths
 ORDER BY  1,2
 
+-- Creating a view for the above(for later visualization in Tableau)
+-- View 1
+CREATE VIEW TotalCasesAndDeaths as
+SELECT location, date, total_cases, total_deaths, population
+FROM portfolioProject..CovidDeaths
 
--- checking total rows/records in CovidDeaths or CovidVaccinations table
+
+
+
+----------------------------------------------------------------------------------------------------
+-- checking total rows/records in CovidDeaths or CovidVaccinations table(both has same rows/records)
 SELECT COUNT(*)
 FROM portfolioProject..CovidDeaths
 
 
--------------------------------------------
-/*
-Looking at Total Cases vs Total Deaths
-Dividing total_deaths by total_cases won't work since they are initially stored as varchar. 
-I cast them to integers and also saved a backup for the original table before converting just to be safe
-*/
 
-
--- Saving backup
-SELECT *
-INTO CovidDeaths_backup
-FROM portfolioProject..CovidDeaths;
-
--- changing column datatype
-ALTER TABLE portfolioProject..CovidDeaths
-ALTER COLUMN total_cases BIGINT;
-
-ALTER TABLE portfolioProject..CovidDeaths
-ALTER COLUMN total_deaths BIGINT;
-
-
--- Calculating Death Percentage
+-----------------------------------------------------------------------------------------------------
+-- Calculating Death Percentage Global
 SELECT location, date, total_cases, total_deaths, (total_deaths/total_cases)*100 as DeathPercentage
 FROM portfolioProject..CovidDeaths
-ORDER BY  1,2
-
 -- the above code section returned DeathPercentages all as 0 bcz both the columns are int. So we have to cast DeathPercentage as decimal or floating number.as shown below
--- Shows likelihood of dying if you contract Covid in your country e.g. 'Pakistan'
+
+
+-- saving the view
+CREATE VIEW DeathPercentages as
 SELECT location, date, total_cases, total_deaths, CAST((total_deaths * 1.0 / total_cases) * 100 AS DECIMAL(10, 2)) AS DeathPercentage
 FROM portfolioProject..CovidDeaths
-WHERE location  = 'Pakistan'
-ORDER BY  location, date
--- after running the above query it shows us the likelihood of dying is about 1.94%
+-- Shows likelihood of dying if you contract Covid
 
 
---------------------------------------------------------------
+
+-----------------------------------------------------------------------------------------------------
 -- Looking at the total cases vs the population
 -- shows what percentage of population got Covid
 SELECT location, date, population, total_cases, CAST((total_cases * 1.0 / population) * 100 AS DECIMAL(10, 2)) AS ContractedPercentage
 FROM portfolioProject..CovidDeaths
-WHERE location  = 'Pakistan'
 ORDER BY  location, date
 
 
@@ -84,7 +79,6 @@ ORDER BY DeathsPerPopulation desc
 -- we can add a where clause, WHERE Continent is NOT NULL
 
 
-
 -- LET'S LOOK AT CONTINENTS
 -- the following will mess up in the drill down. North America only showed United states in it
 SELECT continent, location, MAX(total_deaths) as HighestDeathCount
@@ -102,13 +96,12 @@ GROUP By location
 ORDER BY HighestDeathCount desc 
 
 
--- Global Numbers
+-- Global Numbers and save the view
+CREATE VIEW GlobalNumbers as
 SELECT SUM(new_cases) as totalcases, SUM(cast(new_deaths as int)) as totaldeaths, SUM(CAST(new_deaths as bigint))/(sum(new_cases)+0.00001)*100 as DeathPercentage
 From portfolioProject..CovidDeaths
---where location = 'Pakistan'
 where continent is not null
---group by date
-order by 1,2
+
 
 
 ------------------------------------
